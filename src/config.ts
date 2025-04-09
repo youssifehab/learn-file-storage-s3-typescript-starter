@@ -1,10 +1,8 @@
-import { s3, type S3Client } from "bun";
 import { newDatabase } from "./db/db";
 import type { Database } from "bun:sqlite";
 
 export type ApiConfig = {
   db: Database;
-  s3Client: S3Client;
   jwtSecret: string;
   platform: string;
   filepathRoot: string;
@@ -26,11 +24,9 @@ const s3CfDistribution = envOrThrow("S3_CF_DISTRO");
 const port = envOrThrow("PORT");
 
 const db = newDatabase(pathToDB);
-const client = s3;
 
 export const cfg: ApiConfig = {
   db: db,
-  s3Client: client,
   jwtSecret: jwtSecret,
   platform: platform,
   filepathRoot: filepathRoot,

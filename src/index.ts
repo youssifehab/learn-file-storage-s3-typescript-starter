@@ -2,7 +2,7 @@ import { cfg } from "./config";
 import { handlerLogin, handlerRefresh, handlerRevoke } from "./api/auth";
 import {
   errorHandlingMiddleware,
-  noCacheMiddleware,
+  cacheMiddleware,
   withConfig,
 } from "./api/middleware";
 import { handlerUsersCreate } from "./api/users";
@@ -48,7 +48,7 @@ Bun.serve({
     "/api/thumbnail_upload/:videoId": {
       POST: withConfig(cfg, handlerUploadThumbnail),
     },
-    "/api/thumbnail/:videoId": {
+    "/api/thumbnails/:videoId": {
       GET: withConfig(cfg, handlerGetThumbnail),
     },
     "/api/video_upload/:videoId": {
@@ -64,7 +64,7 @@ Bun.serve({
     const path = url.pathname;
 
     if (path.startsWith("/assets")) {
-      return noCacheMiddleware(() =>
+      return cacheMiddleware(() =>
         serveStaticFile(path.replace("/assets/", ""), cfg.assetsRoot)
       )(req);
     }
