@@ -2,8 +2,10 @@ import { getBearerToken, validateJWT } from "../auth";
 import { respondWithJSON } from "./json";
 import { getVideo, updateVideo } from "../db/videos";
 import type { ApiConfig } from "../config";
-import type { BunRequest } from "bun";
+import { type BunRequest } from "bun";
 import { BadRequestError, NotFoundError, UserForbiddenError } from "./errors";
+import path from "path";
+import { existsSync, mkdirSync } from "fs";
 
 export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
   const { videoId } = req.params as { videoId?: string };
@@ -40,11 +42,19 @@ export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
   const data = await file.arrayBuffer();
   const mediaType = file.type || "image/jpeg";
 
-  // const thumbnailURL = `http://localhost:${cfg.port}/api/thumbnails/:${videoId}`;
+  const extension = mediaType.split("/")[1];
 
-  const base64 = Buffer.from(data).toString("base64");
-  const dataURL = `data:${mediaType};base64,${base64}`;
-  const updatedVideo = { ...video, thumbnailURL: dataURL };
+  if (!existsSync(cfg.assetsRoot)) {
+    mkdirSync(cfg.assetsRoot, { recursive: true });
+  }
+
+  const filePath = path.join(cfg.assetsRoot, `${videoId}.${extension}`);
+
+  await Bun.write(filePath, new Uint8Array(data));
+
+  const thumbnailURL = `http://localhost:${cfg.port}/assets/${videoId}.${extension}`;
+
+  const updatedVideo = { ...video, thumbnailURL };
   updateVideo(cfg.db, updatedVideo);
 
   return respondWithJSON(200, updatedVideo);
