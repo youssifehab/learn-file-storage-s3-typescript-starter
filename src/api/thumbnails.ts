@@ -6,6 +6,7 @@ import { type BunRequest } from "bun";
 import { BadRequestError, NotFoundError, UserForbiddenError } from "./errors";
 import path from "path";
 import { existsSync, mkdirSync } from "fs";
+import { randomBytes } from "crypto";
 
 export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
   const { videoId } = req.params as { videoId?: string };
@@ -52,11 +53,15 @@ export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
     mkdirSync(cfg.assetsRoot, { recursive: true });
   }
 
-  const filePath = path.join(cfg.assetsRoot, `${videoId}.${extension}`);
+  const thumbnailFileName = randomBytes(32).toString("base64url");
+  const filePath = path.join(
+    cfg.assetsRoot,
+    `${thumbnailFileName}.${extension}`
+  );
 
   await Bun.write(filePath, new Uint8Array(data));
 
-  const thumbnailURL = `http://localhost:${cfg.port}/assets/${videoId}.${extension}`;
+  const thumbnailURL = `http://localhost:${cfg.port}/assets/${thumbnailFileName}.${extension}`;
 
   const updatedVideo = { ...video, thumbnailURL };
   updateVideo(cfg.db, updatedVideo);
